@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Text Encryption</title>
+  </head>
+  <body>
+    <h1>Encrypt Your Text</h1>
+    <form id="encryptionForm">
+      <label for="text">Enter Text:</label>
+      <input type="text" id="text" name="text" required />
+      <br /><br />
+      <label for="algorithm">Choose an algorithm:</label>
+      <select id="algorithm" name="algorithm">
+        <option value="fernet">Fernet</option>
+        <option value="aes">AES</option>
+        <option value="des">DES</option>
+        <option value="rsa">RSA</option>
+      </select>
+      <br /><br />
+      <button type="submit">Encrypt</button>
+    </form>
+    <h2>Encrypted Text:</h2>
+    <p id="encryptedText"></p>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+  </body>
+</html>
