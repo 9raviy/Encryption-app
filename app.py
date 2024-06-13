@@ -1,5 +1,7 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
+from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
+from werkzeug.security import generate_password_hash, check_password_hash
 from cryptography.fernet import Fernet
 from Crypto.Cipher import AES, DES
 from Crypto.PublicKey import RSA
@@ -11,17 +13,30 @@ from datetime import datetime
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///data.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SECRET_KEY'] = 'your_secret_key'  # Change this to a secure secret key
 db = SQLAlchemy(app)
 
-class EncryptedText(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    text = db.Column(db.Text, nullable=False)
-    encrypted_text = db.Column(db.Text, nullable=False)
-    algorithm = db.Column(db.String(50), nullable=False)
-    user = db.Column(db.String(50), nullable=False)
-    timestamp = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+login_manager = LoginManager()
+login_manager.init_app(app)
 
-# Generate keys for encryption algorithms
+key = Fernet.generate_key()
+cipher = Fernet(key)
+
+class User(UserMixin, db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(100), unique=True, nullable=False)
+    password_hash = db.Column(db.String(200), nullable=False)
+
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
 fernet_key = Fernet.generate_key()
 fernet_cipher = Fernet(fernet_key)
 
@@ -52,36 +67,64 @@ def encrypt_rsa(text):
 def index():
     return render_template('index.html')
 
-@app.route('/encrypt', methods=['POST'])
-def encrypt_text():
-    data = request.json
-    if not data or not isinstance(data, dict):
-        return jsonify({"error": "Invalid JSON data received"}), 400
-    text = data.get('text')
-    algorithm = data.get('algorithm')
-    user = data.get('user')
-    if not text or not algorithm or not user:
-        return jsonify({"error": "Missing text, algorithm, or user"}), 400
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        user = User.query.filter_by(username=username).first()
+        if user and user.check_password(password):
+            login_user(user)
+            flash('Login successful', 'success')
+            return redirect(url_for('dashboard'))
+        else:
+            flash('Invalid username or password', 'error')
+    return render_template('login.html')
 
-    if algorithm == "fernet":
-        encrypted_text = encrypt_fernet(text)
-    elif algorithm == "aes":
-        encrypted_text = encrypt_aes(text)
-    elif algorithm == "des":
-        encrypted_text = encrypt_des(text)
-    elif algorithm == "rsa":
-        encrypted_text = encrypt_rsa(text)
-    else:
-        return jsonify({"error": "Unsupported algorithm"}), 400
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        user = User.query.filter_by(username=username).first()
+        if user:
+            flash('Username already exists', 'error')
+        else:
+            new_user = User(username=username)
+            new_user.set_password(password)
+            db.session.add(new_user)
+            db.session.commit()
+            flash('Account created successfully', 'success')
+            return redirect(url_for('login'))
+    return render_template('register.html')
 
-    # Store encrypted text in the database
-    encrypted_data = EncryptedText(text=text, encrypted_text=encrypted_text, algorithm=algorithm, user=user)
-    db.session.add(encrypted_data)
-    db.session.commit()
+@app.route('/logout')
+def logout():
+    logout_user()
+    flash('Logout successful', 'success')
+    return redirect(url_for('login'))  # Redirect to login page
 
-    return jsonify({"encrypted_text": encrypted_text, "user": user, "timestamp": encrypted_data.timestamp})
+@app.route('/dashboard', methods=['GET', 'POST'])
+@login_required
+def dashboard():
+    if request.method == 'POST':
+        text = request.form.get('text')
+        algorithm = request.form.get('algorithm')
+        user = current_user.username  # Assuming username is used for encryption
+        if algorithm == 'fernet':
+            encrypted_text = cipher.encrypt(text.encode()).decode()
+        elif algorithm == 'aes':
+            encrypted_text = encrypt_aes(text)
+        elif algorithm == 'des':
+            encrypted_text = encrypt_des(text)
+        elif algorithm == 'rsa':
+            encrypted_text = encrypt_rsa(text)
+        else:
+            encrypted_text = f"Encryption not implemented for {algorithm}"
+        flash('Encryption successful', 'success')
+        return render_template('dashboard.html', encrypted_text=encrypted_text)
+    return render_template('dashboard.html')
 
-# Custom error handler for 400 Bad Request
 @app.errorhandler(400)
 def bad_request_error(error):
     return jsonify({"error": "Bad request. Please check your input."}), 400

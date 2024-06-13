@@ -2,3 +2,4 @@ Flask
 cryptography
 pycryptodome
 SQLAlchemy
+Flask-Login
