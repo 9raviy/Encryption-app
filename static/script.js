@@ -4,13 +4,14 @@ document
     event.preventDefault();
     const text = document.getElementById("text").value;
     const algorithm = document.getElementById("algorithm").value;
+    const user = document.getElementById("user").value;
 
     const response = await fetch("/encrypt", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ text, algorithm }),
+      body: JSON.stringify({ text, algorithm, user }),
     });
 
     const result = await response.json();

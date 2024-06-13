@@ -4,26 +4,87 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Text Encryption</title>
+    <!-- Bootstrap CSS -->
+    <link
+      href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <!-- Custom CSS -->
+    <style>
+      body {
+        background-color: #f8f9fa;
+      }
+      .container {
+        margin-top: 50px;
+      }
+      .card {
+        border: none;
+        box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+      }
+    </style>
   </head>
   <body>
-    <h1>Encrypt Your Text</h1>
-    <form id="encryptionForm">
-      <label for="text">Enter Text:</label>
-      <input type="text" id="text" name="text" required />
-      <br /><br />
-      <label for="algorithm">Choose an algorithm:</label>
-      <select id="algorithm" name="algorithm">
-        <option value="fernet">Fernet</option>
-        <option value="aes">AES</option>
-        <option value="des">DES</option>
-        <option value="rsa">RSA</option>
-      </select>
-      <br /><br />
-      <button type="submit">Encrypt</button>
-    </form>
-    <h2>Encrypted Text:</h2>
-    <p id="encryptedText"></p>
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-body">
+              <h2 class="card-title text-center mb-4">Text Encryption</h2>
+              <form id="encryptionForm">
+                <div class="form-group">
+                  <label for="text">Enter Text:</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="text"
+                    name="text"
+                    required
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="algorithm">Choose an algorithm:</label>
+                  <select class="form-control" id="algorithm" name="algorithm">
+                    <option value="fernet">Fernet</option>
+                    <option value="aes">AES</option>
+                    <option value="des">DES</option>
+                    <option value="rsa">RSA</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="user">Enter User:</label>
+                  <input
+                    type="text"
+                    class="form-control"
+                    id="user"
+                    name="user"
+                    required
+                  />
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">
+                  Encrypt
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="row justify-content-center mt-4">
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-body">
+              <h2 class="card-title text-center mb-4">Encrypted Text</h2>
+              <p class="card-text text-center" id="encryptedText"></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
+    <!-- Bootstrap JS and jQuery -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.1/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <!-- Custom JavaScript -->
     <script src="{{ url_for('static', filename='script.js') }}"></script>
   </body>
 </html>
