@@ -9,19 +9,28 @@ from Crypto.Cipher import PKCS1_OAEP
 from Crypto.Random import get_random_bytes
 import base64
 from datetime import datetime
+import os
+from dotenv import load_dotenv
+
+load_dotenv()  # Load environment variables from .env file
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///data.db'
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'default_secret_key')
+
+# Configure database
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///data.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = 'your_secret_key'  # Change this to a secure secret key
 db = SQLAlchemy(app)
 
+# Initialize Flask-Login
 login_manager = LoginManager()
 login_manager.init_app(app)
 
+# Encryption keys
 key = Fernet.generate_key()
 cipher = Fernet(key)
 
+# User model
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(100), unique=True, nullable=False)
@@ -37,6 +46,7 @@ class User(UserMixin, db.Model):
 def load_user(user_id):
     return User.query.get(int(user_id))
 
+# Encryption functions
 fernet_key = Fernet.generate_key()
 fernet_cipher = Fernet(fernet_key)
 
@@ -63,6 +73,7 @@ def encrypt_rsa(text):
     ciphertext = rsa_cipher.encrypt(text.encode())
     return base64.b64encode(ciphertext).decode()
 
+# Routes
 @app.route('/')
 def index():
     return render_template('index.html')
